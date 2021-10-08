@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>神奇小猫 - 为什么不问问神奇小猫呢？</title>
+<style>
+body,h1,form{
+	margin:0;
+}
+html{
+	font:1em "BlinkMacSystemFont","Microsoft YaHei","微软雅黑","WenQuanYi Micro Hei",sans-serif;
+	text-align:center;
+}
+input{
+	font:inherit;
+}
+input:focus{
+	outline:none;
+}
+::selection{
+	background:rgba(0,149,255,0.1);
+}
+a{
+	text-decoration:none;
+	color:#58a4dd;
+}
+h1{
+	font-size:3.5em;
+	padding:1.5em 0;
+	color:#0bb1f5;
+	font-weight:200;
+}
+h1:before{
+	content:'🐚 ';
+}
+#输入框 input{
+	ime-mode:inactive;
+	ime-mode:disabled;
+	border:none;
+	font-size:1.4em;
+	padding:.5em .7em;
+	max-width:30em;
+	width:100%;
+	background:#F8F8F8;
+	box-shadow:
+		0 0 0 1px #DDD inset,
+		0 1px 2px rgba(0,0,0,.2);
+	transition: box-shadow .3s ease;
+	border-radius:4px;
+	text-align:center;
+	-webkit-appearance:none;
+}
+#输入框 input:focus{
+	box-shadow:
+		0 0 0 2px #58a4dd inset,
+		0 3px 3px rgba(0,0,0,.2) inset;
+}
+#结果{
+	padding:2em 0;
+}
+#结果 a{
+	display:block;
+	padding:.5em;
+	font-size:1.4em;
+}
+#结果 a:hover{
+	background:rgba(88,164,221,.1);
+}
+.text-banner{
+	font-size:1.4em;
+	line-height:4em;
+	color:#DDD;
+}
+footer{
+	font-size:1.4em;
+	line-height:6em;
+	color:#DDD;
+}
+@media (max-width:600px) {
+	h1{
+		padding:.5em 0;
+	}
+	h1:before{
+		display:none;
+	}
+	#输入框{
+		padding:0 1em;
+	}
+}
+</style>
+<h1>神奇小猫</h1>
+<form id="输入框" autocomplete="off">
+	<input type="search" name="text" placeholder="键入关键字、回车直达">
+</form>
+<div id="结果"></div>
+<footer>为什么不问问神奇小猫呢？</footer>
+<script>
+(function (root) {
+  'use strict';
+  function extend(a, b) {
+    for (var property in b) {
+      if (b.hasOwnProperty(property)) {
+        a[property] = b[property];
+      }
+    }
+    return a;
+  }
+  function distance(s1, s2, options) {
+    var m = 0;
+    var defaults = { caseSensitive: true };
+    var settings = extend(defaults, options);
+    var i;
+    var j;
+    if (s1.length === 0 || s2.length === 0) {
+      return 0;
+    }
+    if (!settings.caseSensitive) {
+      s1 = s1.toUpperCase();
+      s2 = s2.toUpperCase();
+    }
+    if (s1 === s2) {
+      return 1;
+    }
+    var range = (Math.floor(Math.max(s1.length, s2.length) / 2)) - 1;
+    var s1Matches = new Array(s1.length);
+    var s2Matches = new Array(s2.length);
+    for (i = 0; i < s1.length; i++) {
+      var low  = (i >= range) ? i - range : 0;
+      var high = (i + range <= (s2.length - 1)) ? (i + range) : (s2.length - 1);
+      for (j = low; j <= high; j++) {
+        if (s1Matches[i] !== true && s2Matches[j] !== true && s1[i] === s2[j]) {
+          ++m;
+          s1Matches[i] = s2Matches[j] = true;
+          break;
+        }
+      }
+    }
+    if (m === 0) {
+      return 0;
+    }
+    var k = 0;
+    var numTrans = 0;
+    for (i = 0; i < s1.length; i++) {
+      if (s1Matches[i] === true) {
+        for (j = k; j < s2.length; j++) {
+          if (s2Matches[j] === true) {
+            k = j + 1;
+            break;
+          }
+        }
+        if (s1[i] !== s2[j]) {
+          ++numTrans;
+        }
+      }
+    }
+    var weight = (m / s1.length + m / s2.length + (m - (numTrans / 2)) / m) / 3;
+    var l = 0;
+    var p = 0.1;
+    if (weight > 0.7) {
+      while (s1[l] === s2[l] && l < 4) {
+        ++l;
+      }
+      weight = weight + l * p * (1 - weight);
+    }
+    return weight;
+  }
+  if (typeof define === 'function' && define.amd) {
+    define([], function() {return distance});
+  } else if (typeof exports === 'object') {
+    module.exports = distance;
+  } else {
+    root.distance = distance;
+  }
+})(this);
+</script>
+<script>
+var 
+sites={};
+var 
+x=new XMLHttpRequest();
+x.open('GET','magiccatdata.json',1);
+x.onload=function(r){
+	r=JSON.parse(x.response);
+	for(var domain in r){
+		r[domain].domain=r[domain].href.
+			replace(/^https?:\/\//,'').
+			replace(/^www\./,'').
+			replace(/\/.*$/,'');
+		sites[domain+' '+r[domain].title]=r[domain];
+	}
+}
+x.send();
+var 
+判断重复=function(arr,o){
+	for(var i=0,l=arr.length;i<l;i++){
+		if(arr[i].domain==o.domain){
+			return true;
+		}
+	}
+	return false;
+},
+最近输入结果=[],
+历史跳转结果数量=5,
+展示最近输入的关键字=function(){
+	结果.innerHTML=列表转换(最近输入结果);
+},
+列表转换=function(r){
+	return r.map(function(o){
+		return '<a href="'+(o.href.match(/^http/)?'':'http://')+o.href+'">'+o.domain+' - '+o.title+'</a>';
+	}).join('');
+},
+最终展示地址列表=[],
+最终展示地址列表最大数量限制=30,
+根据关键字搜索并展示=function(text){
+	var 
+	中文模式=!!text.match(/[一-龥]/);
+	// console.log(sites);
+	最终展示地址列表=[];
+	for(var domain in sites){
+		// if(domain.search(text)!=-1){
+			sites[domain].顺序=distance(中文模式?sites[domain].title:domain,text);//+distance(sites[domain].title,text);
+			最终展示地址列表.push(sites[domain]);
+		// }
+	}
+	最终展示地址列表.sort(function(a,b){
+		return b.顺序-a.顺序;
+	});
+	if(最终展示地址列表.length>最终展示地址列表最大数量限制)
+		最终展示地址列表.length=最终展示地址列表最大数量限制;
+	结果.innerHTML=列表转换(最终展示地址列表);
+};
+输入框.onsubmit=function(e){
+	if(e)
+		e.preventDefault();
+	var 
+	text=输入框.text.value.trim();
+	text=text.toLowerCase();
+	if(text.match(/^https?:/)){
+		location.href=text;
+		return;
+	}
+	if(!text.match(/:/) && text.match(/^(www|blog|bbs)|\.(com|net|org)$/)){
+		location.href='http://'+text;
+		//location.href='https://www.google.com/search?safe=strict&site=&source=hp&q='+encodeURIComponent(text)+'&btnI=%C2%A0手气不错%C2%A0';
+		return;
+	}
+	根据关键字搜索并展示(text);
+	var 
+	a=结果.querySelector('a');
+	if(a){
+		if(最终展示地址列表[0] && !判断重复(最近输入结果,最终展示地址列表[0])){
+			最近输入结果.unshift(最终展示地址列表[0]);
+			if(最近输入结果.length>历史跳转结果数量){
+				最近输入结果.length=历史跳转结果数量;
+			}
+			if(window.localStorage){
+				localStorage.历史搜索=JSON.stringify(最近输入结果);
+			}
+		}
+		location.href=a.href;
+	}
+};
+try{
+	最近输入结果=JSON.parse(localStorage.历史搜索);
+}catch(e){
+	最近输入结果=[];
+}
+展示最近输入的关键字();
+输入框.text.oninput=function(){
+	var 
+	text=输入框.text.value.trim();//.match(/^\w+$/);
+	text=text.toLowerCase();
+	clearTimeout(结果.T);
+	if(!text){
+		展示最近输入的关键字();
+		return;
+	}
+	结果.T=setTimeout(function(){
+		根据关键字搜索并展示(text);
+	},20);
+}
+输入框.text.focus();
+document.body.onclick=function(e){
+	var 
+	target=e.target,
+	action=target.getAttribute('action');
+	switch(action){
+		case '搜索':
+			var 
+			text=target.innerHTML;
+			输入框.text.focus();
+			输入框.text.value=text;
+			输入框.text.oninput();
+			break;
+	}
+}
+console.log('神奇海螺 https://github.com/itorr/magiconch.com');
+console.log('网址提交 https://github.com/itorr/magiconch.com/issues/1');
+</script>
